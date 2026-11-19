@@ -1,0 +1,139 @@
+{
+  "version": 5,
+  "description": "每模板一个 md（user/<id>.md）。自由格式即可；若含 ## 模板说明/效果预览/生成要求 则按节拆开，否则整份作正文。",
+  "default_template_id": "flexible_assistant",
+  "templates": [
+    {
+      "id": "flexible_assistant",
+      "name": "灵活助手",
+      "tagline": "围绕问题灵活组织，适合综合研判",
+      "length_label": "约 700～1100 字",
+      "max_output_tokens": 1400,
+      "recommended": true,
+      "sort_order": 1,
+      "content_file": "user/flexible_assistant.md",
+      "tags": ["默认", "灵活", "综合研判"]
+    },
+    {
+      "id": "structured_four_section",
+      "name": "四段式报告",
+      "tagline": "背景、舆情、研判、建议四章齐全",
+      "length_label": "约 1000～1400 字",
+      "max_output_tokens": 1600,
+      "recommended": false,
+      "sort_order": 2,
+      "content_file": "user/structured_four_section.md",
+      "tags": ["正式", "结构化", "汇报"]
+    },
+    {
+      "id": "brief_bullets",
+      "name": "要点清单",
+      "tagline": "先给结论，再列依据和关注事项",
+      "length_label": "约 400～650 字",
+      "max_output_tokens": 800,
+      "recommended": false,
+      "sort_order": 3,
+      "content_file": "user/brief_bullets.md",
+      "tags": ["简短", "条列", "快读"]
+    },
+    {
+      "id": "qa_conversational",
+      "name": "问答解读",
+      "tagline": "先直接作答，再解释依据和边界",
+      "length_label": "约 600～900 字",
+      "max_output_tokens": 1100,
+      "recommended": false,
+      "sort_order": 4,
+      "content_file": "user/qa_conversational.md",
+      "tags": ["问答", "解读", "连续追问"]
+    },
+    {
+      "id": "decision_memo",
+      "name": "决策备忘录",
+      "tagline": "背景、研判、建议三章，正式克制",
+      "length_label": "约 800～1200 字",
+      "max_output_tokens": 1400,
+      "recommended": false,
+      "sort_order": 5,
+      "content_file": "user/decision_memo.md",
+      "tags": ["备忘录", "机关材料", "决策"]
+    },
+    {
+      "id": "situation_brief",
+      "name": "舆情态势简报",
+      "tagline": "快速呈现核心态势、主要动向和关注点",
+      "length_label": "约 600～900 字",
+      "max_output_tokens": 1000,
+      "recommended": false,
+      "sort_order": 6,
+      "content_file": "user/situation_brief.md",
+      "tags": ["快报", "态势", "值班"]
+    },
+    {
+      "id": "risk_assessment",
+      "name": "风险研判报告",
+      "tagline": "聚焦风险分级、触发信号和演化趋势",
+      "length_label": "约 700～1100 字",
+      "max_output_tokens": 1300,
+      "recommended": false,
+      "sort_order": 7,
+      "content_file": "user/risk_assessment.md",
+      "tags": ["风险", "预警", "研判"]
+    },
+    {
+      "id": "response_brief",
+      "name": "处置建议专报",
+      "tagline": "围绕处置目标形成分级、可执行建议",
+      "length_label": "约 600～900 字",
+      "max_output_tokens": 1100,
+      "recommended": false,
+      "sort_order": 8,
+      "content_file": "user/response_brief.md",
+      "tags": ["处置", "建议", "执行"]
+    },
+    {
+      "id": "five_element_brief",
+      "name": "五要素事件简报",
+      "tagline": "事件类型、涉事主体、事件走向、潜在风险、关联事件",
+      "length_label": "约 700～1100 字",
+      "max_output_tokens": 1400,
+      "recommended": false,
+      "sort_order": 9,
+      "content_file": "user/five_element_brief.md",
+      "tags": ["验收", "五要素", "结构化", "指标"]
+    },
+    {
+      "id": "intl_politics",
+      "name": "国际政治局势",
+      "tagline": "五要素·国际政治与地缘安全口径",
+      "length_label": "约 800～1200 字",
+      "max_output_tokens": 1500,
+      "recommended": false,
+      "sort_order": 10,
+      "content_file": "user/intl_politics.md",
+      "tags": ["验收", "五要素", "国际政治", "指标"]
+    },
+    {
+      "id": "domestic_foreign_opinion",
+      "name": "国内外舆情",
+      "tagline": "五要素·国内与国外舆情必须同时体现",
+      "length_label": "约 800～1300 字",
+      "max_output_tokens": 1600,
+      "recommended": false,
+      "sort_order": 11,
+      "content_file": "user/domestic_foreign_opinion.md",
+      "tags": ["验收", "五要素", "国内外舆情", "双域", "指标"]
+    },
+    {
+      "id": "capital_political_security",
+      "name": "首都政治安全政治风险",
+      "tagline": "五要素·首都政治安全与政治风险口径",
+      "length_label": "约 800～1200 字",
+      "max_output_tokens": 1500,
+      "recommended": false,
+      "sort_order": 12,
+      "content_file": "user/capital_political_security.md",
+      "tags": ["验收", "五要素", "首都政治安全", "指标"]
+    }
+  ]
+}

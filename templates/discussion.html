@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0c111b"><title>共研 · 智能体研讨空间</title>
+  <link rel="stylesheet" href="/static/discussion/workspace.css?v=conversation-6">
+  <script defer src="/static/discussion/chat-view.js?v=targeted-remediation-9"></script>
+  <script defer src="/static/discussion/workspace.js?v=targeted-remediation-9"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/discussion"><span class="brand-icon" aria-hidden="true">◈</span><span>共研 <small>AGENT FORUM</small></span></a>
+    <div class="top-actions"><button id="theme-toggle" class="icon-button" aria-label="切换浅色主题" title="切换主题">☼</button><span class="connection" id="connection">本地工作台</span><a href="/" class="quiet-link">原项目首页 ↗</a><button id="new-meeting" class="primary small">＋ 新建研讨</button></div>
+  </header>
+  <main id="welcome" class="welcome">
+    <div class="welcome-copy"><span class="eyebrow">HUMAN + AGENTS</span><h1>让观点交锋，<br>让结论有据。</h1><p>多位智能体独立研究、相互质询、补充证据。你随时提出方向，在每轮结论之后决定下一步。</p>
+      <div class="steps"><span>01 明确议题</span><i>→</i><span>02 协同研讨</span><i>→</i><span>03 人工决策</span><i>→</i><span>04 形成报告</span></div>
+      <button id="welcome-create" class="primary">创建一次研讨 <span>↗</span></button><button id="quick-demo" class="secondary">体验演示案例</button>
+      <p class="fine">演示案例为虚构资料，不调用模型；真实分析使用服务端已配置的模型与搜索。</p>
+    </div>
+    <section class="welcome-preview"><div class="preview-label"><span class="dot"></span> 研讨如何进行</div><div class="preview-agent"><b>事实研究</b><p>整理事件时间线，引用可核验的来源。</p></div><div class="preview-agent"><b>媒体观点 / 舆情分析</b><p>区分报道观点与评论样本，提出数据局限。</p></div><div class="preview-agent host"><b>主持协调</b><p>汇总共识、分歧与待解问题，把决策交还给你。</p></div><div class="preview-decision">由你决定 <strong>继续追问　/　生成报告</strong></div></section>
+    <section class="recent-section"><h2>最近的研讨</h2><div id="welcome-history" class="history-grid"></div></section>
+  </main>
+  <section id="workspace" class="workspace" hidden>
+    <div class="meeting-heading"><div><div class="eyebrow" id="mode-label"></div><h1 id="meeting-title"></h1><p id="meeting-subtitle"></p></div><span id="meeting-status" class="pill"></span></div>
+    <div id="error-banner" role="alert" class="error-banner" hidden></div>
+    <nav class="mobile-tabs"><button data-panel="navigation" class="active">研讨导航</button><button data-panel="forum">对话</button><button data-panel="minutes">纪要与证据</button></nav>
+    <div class="workspace-grid">
+      <aside id="navigation" class="navigation panel">
+        <div class="rail-heading"><span class="eyebrow">DISCUSSION SPACE</span><p>你的研讨空间</p></div>
+        <div class="section-title"><h2>讨论轮次</h2><span class="muted">可回看</span></div><div id="round-list" class="nav-list"></div>
+        <div class="section-title"><h2>协作成员</h2></div><div id="role-list"></div>
+        <details class="rail-section"><summary>研讨议程</summary><button id="edit-agenda" class="text-button">调整议程与成员 ↗</button><ol id="agenda-list" class="agenda-list"></ol></details>
+        <details class="rail-section" open><summary>报告版本</summary><div id="report-list" class="nav-list"></div></details>
+        <details class="rail-section"><summary>数据源与材料</summary><button id="edit-sources" class="text-button">平台设置 / 登录 ↗</button><div id="source-settings"></div><label class="upload-zone">＋ 补充材料<input id="upload" type="file" accept=".pdf,.txt,.md,.csv" hidden></label><p class="fine">PDF / TXT / MD / CSV<br>新增材料在下一轮分析。</p><div id="material-list"></div></details>
+        <details class="history-details"><summary>历史研讨</summary><div id="meeting-list"></div></details>
+      </aside>
+      <section id="forum" class="forum panel">
+        <div class="forum-heading"><div><h2><span class="forum-mark" aria-hidden="true">◉</span> 智能体对话 <span id="round-caption"></span></h2><p id="round-stage">确认议程后开始第一轮</p></div><span id="activity-dot" class="activity-dot"></span></div>
+        <div id="collection-summary" class="collection-summary" hidden></div>
+        <nav class="reading-tools" aria-label="阅读定位"><button class="text-button" data-jump="conversation">对话记录</button><button class="text-button" data-jump="summary">跳到本轮总结 ↓</button><button id="toggle-minutes" class="text-button">纪要 / 证据</button><button id="new-answers" class="text-button" hidden>有新回答 ↓</button></nav>
+        <div id="timeline" class="timeline" tabindex="0" aria-label="智能体研讨对话"></div>
+        <div class="composer">
+          <div id="demo-tip" class="demo-tip" hidden>演示使用预设内容。自由发言仅记录，不进行模型分析。<button id="demo-followup" class="text-button">填入示例追问 ↗</button></div>
+          <form id="message-form" class="chat-input">
+            <textarea id="message" rows="1" maxlength="5000" aria-label="消息" aria-describedby="message-help" placeholder="发送消息，提出质疑或下一轮方向…"></textarea>
+            <div class="chat-input-tools"><select id="target" aria-label="接收角色"><option value="all">发给全体</option><option value="facts">事实研究</option><option value="media">媒体观点</option><option value="sentiment">舆情分析</option><option value="review">交叉核验</option><option value="host">主持协调</option></select><span class="keyboard-hint">Enter 发送 · Shift+Enter 换行</span><button id="send-message" type="submit" class="send-button" aria-label="发送消息" title="发送消息" disabled><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></div>
+          </form>
+          <p class="composer-hint" id="message-help">发送后，点击“开始下一轮”继续研讨。</p>
+          <div class="decision-bar"><div><b id="decision-title">准备开始</b><p id="decision-description">检查议程和资料，开始第一轮研讨。</p></div><div class="decision-buttons"><button id="stop-collection" class="secondary" hidden>停止采集并进入分析</button><button id="stop-round" class="secondary" hidden>结束交锋并汇总</button><button id="terminate-round" class="text-button" hidden>终止本轮</button><button id="resume-round" class="secondary" hidden>恢复未完成阶段</button><button id="remediate-round" class="secondary" hidden>补救失败修订</button><button id="generate-report" class="secondary">生成报告</button><button id="start-round" class="primary">开始第一轮 →</button></div></div>
+        </div>
+      </section>
+
+    </div>
+  </section>
+  <dialog id="insights-dialog" class="insights-drawer" aria-labelledby="insights-title"><div class="dialog-heading"><div><span class="eyebrow">RESEARCH CONTEXT</span><h2 id="insights-title">纪要与证据</h2></div><button class="close-dialog" aria-label="关闭纪要与证据">×</button></div>      <aside id="minutes" class="minutes panel"><div class="section-title"><h2>本轮纪要</h2><span class="muted">主持汇总</span></div><div id="summary-content"></div><div class="section-title"><h2>反馈处理</h2></div><div id="feedback-list"></div><div class="section-title"><h2>证据库</h2><span id="evidence-count" class="muted"></span></div><input id="evidence-search" type="search" placeholder="查找资料标题或内容" aria-label="查找证据"><select id="evidence-filter" aria-label="筛选证据来源"><option value="">全部来源</option><option value="web_summary">搜索摘要</option><option value="web_page">网页正文</option><option value="wb">微博</option><option value="xhs">小红书</option><option value="dy">抖音</option><option value="upload">上传文档</option><option value="comment">上传评论</option><option value="demo">演示资料</option></select><div id="evidence-list"></div><div id="evidence-pagination"></div></aside></dialog>
+  <dialog id="create-dialog"><form id="create-form"><div class="dialog-heading"><div><span class="eyebrow">NEW DISCUSSION</span><h2>开启一次协同研讨</h2></div><button type="button" class="close-dialog" aria-label="关闭">×</button></div>
+    <label>事件名称<input name="title" required maxlength="200" placeholder="例如：某平台服务中断引发的用户投诉"></label>
+    <div class="form-row"><label>运行方式<select name="mode"><option value="live">真实分析 · 调用模型与检索</option><option value="demo">演示模式 · 虚构固定案例</option></select></label><label>报告类型<select name="report_type"><option value="brief">事件简报</option><option value="opinion">舆情分析报告</option></select></label></div>
+    <label>报告篇幅<select name="report_depth"><option value="standard">标准篇幅</option><option value="full">完整分析 · 5000—8000 字</option></select></label><label>时间范围<input name="time_range" maxlength="200" placeholder="例如：2026-10-12 至 2026-10-14"></label><label>报告要求与关注点<textarea name="requirements" rows="3" maxlength="5000" placeholder="想了解哪些问题？哪些信息需要重点核实？"></textarea></label>
+    <label class="checkbox"><input type="checkbox" name="web_enabled" checked>启用联网检索</label><fieldset class="crawl-choices"><legend>允许智能体采集的平台</legend><label class="checkbox"><input type="checkbox" name="crawl_platforms" value="dy">抖音</label><label class="checkbox"><input type="checkbox" name="crawl_platforms" value="xhs">小红书</label><label class="checkbox"><input type="checkbox" name="crawl_platforms" value="wb">微博</label></fieldset><p class="fine">真实模式需先在“平台采集”中登录。不设帖子总数和整轮时间上限；协调模型根据问题缺口决定翻页、调整或结束采集。演示模式不连接平台。</p><div class="dialog-actions"><button type="button" class="secondary close-dialog">取消</button><button type="submit" class="primary">创建并拟定议程 →</button></div>
+  </form></dialog>
+  <dialog id="agenda-dialog"><form id="agenda-form"><div class="dialog-heading"><h2>调整议程与成员</h2><button type="button" class="close-dialog" aria-label="关闭">×</button></div><label>每行一个议题<textarea id="agenda-input" rows="7" required></textarea></label><label>每个议题的交锋上限<select id="debate-exchanges"><option value="1">1 次 · 快速互审修订</option><option value="2" selected>2 次 · 复核修订结果</option></select></label><label>报告篇幅<select id="report-depth"><option value="standard">标准篇幅</option><option value="full">完整分析 · 5000—8000 字</option></select></label><div class="role-choices"><label class="checkbox"><input type="checkbox" value="facts">事实研究</label><label class="checkbox"><input type="checkbox" value="media">媒体观点</label><label class="checkbox"><input type="checkbox" value="sentiment">舆情分析</label></div><p class="fine">协调器会根据下一轮反馈选择相关角色；核验与主持汇总由系统组织。</p><div class="dialog-actions"><button class="primary" type="submit">保存议程</button></div></form></dialog>
+  <dialog id="evidence-dialog"><div class="dialog-heading"><h2 id="source-title">证据详情</h2><button type="button" class="close-dialog" aria-label="关闭">×</button></div><p id="source-meta" class="fine"></p><pre id="source-text"></pre><a id="source-link" target="_blank" rel="noopener noreferrer">打开原始来源 ↗</a></dialog>
+  <dialog id="sources-dialog"><div class="dialog-heading"><h2>平台采集与登录</h2><button type="button" class="close-dialog" aria-label="关闭">×</button></div><p class="fine">勾选允许采集的平台。协调智能体会结合议题和追问确定关键词，在下一轮自动采集。平台登录会打开本机浏览器；完成后回到这里保存。</p><form id="sources-form"><div id="platform-connections"></div><label>情感分析抽样数量<input id="sentiment-sample" type="number" min="1" step="1" value="500" required></label><p class="fine">采集不设整轮时限和帖子总量上限，由协调模型根据证据覆盖决定继续翻页、调整关键词或结束。可随时停止采集并进入分析。原始评论全部保留，比例只描述成功分类的抽样评论。</p><p class="fine">登录凭据仅保存在本机，不发给模型。保存会话不等于采集成功；平台限制或会话过期会在本轮记录中提示。分页采集文字和一级评论，不下载视频。</p><div class="dialog-actions"><button type="button" class="secondary" id="refresh-connections">刷新连接状态</button><button class="primary" type="submit">保存采集设置</button></div></form></dialog>
+  <dialog id="collection-dialog" class="collection-drawer" aria-labelledby="collection-title"><div class="dialog-heading"><h2 id="collection-title">采集计划与进度</h2><button class="close-dialog" aria-label="关闭采集详情">×</button></div><p class="fine">跨平台并行，同平台逐页轮转；协调模型按需求决定继续、调整或停止，显示的耗时仅用于观察，不是截止时间。</p><div class="collection-filters"><select id="collection-platform" aria-label="采集平台"><option value="">全部来源</option><option value="wb">微博</option><option value="xhs">小红书</option><option value="dy">抖音</option><option value="web">网页检索</option></select><select id="collection-status" aria-label="采集状态"><option value="">全部状态</option><option value="running">采集中</option><option value="model_stopped">模型结束采集</option><option value="assessment_failed">评估待重试</option><option value="budget_exhausted">历史：时间用完</option><option value="needs_login">需要验证</option><option value="failed">失败</option><option value="exhausted">查询结束</option><option value="satisfied">材料已覆盖</option></select></div><div id="collection-items"></div><div class="drawer-pagination"><button id="collection-prev" class="secondary small">上一页</button><span id="collection-page-label"></span><button id="collection-next" class="secondary small">下一页</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body></html>
+

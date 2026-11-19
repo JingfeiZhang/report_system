@@ -1,0 +1,102 @@
+# server 部署模板（~/tfsj/deploy/docker-compose.yml）
+# 使用前：docker load 导入 bettafish_modify:local 与 mock-search-api:latest
+# 网络 qiyuan 需已存在：docker network create qiyuan
+# autoheal：docker load willfarrell/autoheal 后 compose --profile autoheal up -d
+
+services:
+  mock-search-api:
+    image: mock-search-api:latest
+    container_name: mock-search-api
+    restart: unless-stopped
+    ports:
+      - "8787:8787"
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: 8787
+      API_RELOAD: "false"
+      ENVIRONMENT: production
+      DB_HOST: host.docker.internal
+      DB_PORT: 5237
+      DB_USER: SYSDBA
+      DB_PASSWORD: qiyuanDm2026
+      DB_NAME: qiyuan
+      LLM_API_KEY: EMPTY
+      LLM_BASE_URL: http://192.168.1.10:8000/v1
+      LLM_MODEL: Qwen3-30B-A3B-Instruct-2507
+      TZ: Asia/Shanghai
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - qiyuan
+
+  bettafish:
+    image: bettafish_modify:local
+    container_name: bettafish
+    restart: unless-stopped
+    # event2 MCP 模式不需要 mock；仅 /event 深度研报仍依赖 mock 时再取消注释：
+    # depends_on:
+    #   mock-search-api:
+    #     condition: service_healthy
+    ports:
+      - "28000:8000"
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./final_reports:/app/final_reports
+      - ./logs:/app/logs
+      # zip 解压落盘：容器内统一用 /app/exports/crawl_import（见 .env CRAWL_IMPORT_EXTRACT_DIR）
+      - ./exports/crawl_import:/app/exports/crawl_import
+      # 兼容已把 CRAWL_IMPORT_EXTRACT_DIR 写成宿主机绝对路径的现场 .env
+      - ./exports/crawl_import:/home/qiyaun/tfsj/deploy/exports/crawl_import
+    env_file:
+      - ./.env
+    environment:
+      MOCK_SEARCH_API_HOST: mock-search-api
+      MOCK_SEARCH_API_PORT: 8787
+      TZ: Asia/Shanghai
+      LOG_LEVEL: ${LOG_LEVEL:-WARNING}
+      UVICORN_LOG_LEVEL: ${UVICORN_LOG_LEVEL:-warning}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: >
+      bash -lc "exec uvicorn fastapi_integration:app --host 0.0.0.0 --port 8000 --log-level $${UVICORN_LOG_LEVEL:-warning}"
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5)",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 45s
+    networks:
+      - qiyuan
+
+  autoheal:
+    profiles: ["autoheal"]
+    image: ${AUTOHEAL_IMAGE:-willfarrell/autoheal:latest}
+    container_name: autoheal
+    restart: always
+    environment:
+      AUTOHEAL_CONTAINER_LABEL: autoheal
+      AUTOHEAL_INTERVAL: ${AUTOHEAL_INTERVAL:-15}
+      AUTOHEAL_START_PERIOD: ${AUTOHEAL_START_PERIOD:-120}
+      AUTOHEAL_DEFAULT_STOP_TIMEOUT: 10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  qiyuan:
+    external: true

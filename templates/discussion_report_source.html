@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ evidence.title }} · 引用原文</title><link rel="stylesheet" href="/static/discussion/report.css"></head>
+<body>
+<nav><a href="/discussions/{{ meeting.id }}/reports/{{ report.id }}">← 返回报告</a><span>引用原文</span><a href="/discussion?meeting={{ meeting.id }}">研讨工作台</a></nav>
+<main><header><span>共研 / SOURCE</span><h1>{{ evidence.title }}</h1><p>{{ evidence.date or '来源未提供日期' }} · {{ evidence.locator }}</p></header>
+{% if evidence.source_type == 'image_analysis' %}
+<p>图片机器提取 · {{ evidence.model }} · {{ evidence.extraction_scope }}。图片中文字与视觉描述属于识别结果。</p>
+<p>{{ evidence.date_scope }}</p>
+{% for image in evidence.images %}{% if image.status == 'downloaded' %}
+<figure class="source-image"><a href="/api/discussions/{{ meeting.id }}/images/{{ image.sha256 }}" target="_blank" rel="noopener"><img src="/api/discussions/{{ meeting.id }}/images/{{ image.sha256 }}" alt="本条图片证据的原始配图预览"></a><figcaption>原帖配图 {{ image.index }} · <a href="/api/discussions/{{ meeting.id }}/images/{{ image.sha256 }}?download=1">下载原始图片</a></figcaption></figure>
+{% endif %}{% endfor %}
+{% endif %}
+<pre>{{ evidence.text }}</pre>
+{% if parent %}<details><summary>所属帖子 · {{ parent.title }}</summary><pre>{{ parent.text }}</pre><p>以上为本报告快照中保存的帖子文字。</p></details>{% endif %}
+{% if evidence.url %}<p><a href="{{ evidence.url }}" target="_blank" rel="noopener noreferrer">打开原始网页 ↗</a></p>{% endif %}
+<p>以上为生成本报告时保存的{{ '图片识别内容' if evidence.source_type == 'image_analysis' else '原文片段' }}。编号：{{ evidence.id }}</p>
+</main></body></html>

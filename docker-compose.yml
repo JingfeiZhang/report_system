@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  # ============================================
+  # BettaFish 服务（使用自己构建的镜像）
+  # ============================================
+  bettafish:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bettafish_modify:local  # 本地构建后的镜像标签
+    # 官方镜像（已注释）
+    # image: ghcr.io/666ghj/bettafish:latest
+    # image: ghcr.nju.edu.cn/666ghj/bettafish:latest
+    container_name: bettafish
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_SERVER_ENABLE_FILE_WATCHER=false
+      - TZ=Asia/Shanghai
+    ports:
+      - "5000:5000"
+      - "8501:8501"
+      - "8502:8502"
+      - "8503:8503"
+    volumes:
+      # 运行产物已移到上一级目录，减小 build context；容器内路径不变
+      - ../logs:/app/logs
+      - ../final_reports:/app/final_reports
+      - ./.env:/app/.env
+      - ../insight_engine_streamlit_reports:/app/insight_engine_streamlit_reports
+      - ../media_engine_streamlit_reports:/app/media_engine_streamlit_reports
+      - ../query_engine_streamlit_reports:/app/query_engine_streamlit_reports
+      - ../exports/crawl_import:/app/exports/crawl_import
+    networks:
+      - bettafish-network
+
+  # ============================================
+  # Mock Tavily Search API 服务
+  # ============================================
+  mock-tavily-api:
+    image: azuki/mock-tavily-api:v1.5
+    container_name: mock-tavily-api
+    restart: unless-stopped
+    
+    # 端口映射
+    ports:
+      - "8787:8787"
+    
+    # 环境变量配置
+    environment:
+      # API 服务配置
+      - API_HOST=0.0.0.0  # 改为 0.0.0.0 允许外部访问
+      - API_PORT=8787
+      - API_RELOAD=false
+      - ENVIRONMENT=production
+      
+      # 数据库配置（达梦数据库）
+      - DB_HOST=127.0.0.1
+      - DB_PORT=5236
+      - DB_USER=SYSDBA
+      - DB_PASSWORD=123abc!@#
+      - DB_NAME=DMDB
+      
+      # LLM 配置
+      - LLM_API_KEY=sk-12345678
+      - LLM_BASE_URL=http://10.108.24.191:41320/v1
+      - LLM_MODEL=chatbit
+
+      # 时区设置
+      - TZ=Asia/Shanghai
+    
+    # 数据卷挂载
+    volumes:
+      # 日志文件
+      - ./mock_api_files/logs:/app/logs
+      # 配置文件（如果需要自定义配置）
+      - ./mock_api_files/config.py:/app/config.py:ro
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    networks:
+      - bettafish-network
+
+# ============================================
+# 网络配置
+# ============================================
+networks:
+  bettafish-network:
+    driver: bridge

@@ -1,0 +1,26 @@
+ARG DEPENDENCY_IMAGE=bettafish-deps:arm64-20260730
+FROM ${DEPENDENCY_IMAGE}
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/root/.local/bin:${PATH}" \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    DM_HOME=/opt/dmdbms \
+    LD_LIBRARY_PATH=/opt/dmdbms/bin
+
+WORKDIR /app
+
+# Dependencies, browser binaries, and ARM64 DM drivers are already in DEPENDENCY_IMAGE.
+COPY .env.example .env
+COPY . .
+
+RUN mkdir -p logs final_reports insight_engine_streamlit_reports \
+    media_engine_streamlit_reports query_engine_streamlit_reports
+
+EXPOSE 5000 8501 8502 8503
+
+CMD ["python", "app.py"]
+

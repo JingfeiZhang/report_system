@@ -1,0 +1,160 @@
+MindSpider 爬取结果 ZIP 导入达梦 — 前端对接说明（简要）
+============================================================
+
+一、基本信息
+------------
+服务：BettaFish（FastAPI）
+文档页：http://<主机>:<端口>/docs
+内场常见端口：28000
+Content 类型：
+  - 上传：multipart/form-data
+  - 查询：无 Body
+
+流程：前端上传 zip → 拿到 job_id → 轮询进度 → 根据 status / tables 判断是否真正入库成功。
+
+
+二、接口 1：上传 ZIP（创建导入任务）
+--------------------------------
+方法：POST
+路径：/api/v1/crawl-import/jobs
+完整示例：http://192.168.x.x:28000/api/v1/crawl-import/jobs
+
+请求（multipart/form-data）：
+  字段名        必填    说明
+  ----------------------------------------------------------
+  file          是      MindSpider 导出的 .zip
+                        （内含 manifest.json + *.csv）
+  event_id      否      仅备注，不写库
+  event_date    否      仅备注，不写库
+  remark        否      仅备注，不写库
+
+注意：
+  - 三个可选字段不要填 Swagger 默认的 "string"；不需要就留空或不传。
+  - 仅支持 .zip；默认大小上限 512MB（服务端可配）。
+
+成功响应示例（HTTP 200）：
+{
+  "code": 0,
+  "msg": "queued",
+  "data": {
+    "job_id": "d3f22fb23c014e6989fd854a23db0bc1",
+    "status": "queued",
+    "phase": "uploaded",
+    "message": "文件已接收，排队解压入库",
+    "extract_dir": "..."
+  }
+}
+
+前端拿到 data.job_id 后，进入轮询。
+
+
+三、接口 2：查询进度 / 结果
+--------------------------
+方法：GET
+路径：/api/v1/crawl-import/jobs/{job_id}
+完整示例：http://192.168.x.x:28000/api/v1/crawl-import/jobs/d3f22fb23c014e6989fd854a23db0bc1
+
+成功响应示例（HTTP 200）：
+{
+  "code": 0,
+  "msg": "success",
+  "data": {
+    "job_id": "...",
+    "status": "running | completed | failed | queued",
+    "phase": "extracting | importing | completed | failed | ...",
+    "message": "人类可读说明",
+    "error": null,
+    "progress_percent": 0-100,
+    "extract_dir": "...",
+    "manifest": { "...": "来自 zip 的声明信息，不是入库结果" },
+    "tables": [
+      {
+        "name": "weibo_note",
+        "rows_read": 48,
+        "rows_inserted": 48,
+        "rows_updated": 0,
+        "rows_skipped": 0,
+        "message": "ok"
+      }
+    ],
+    "schema": "MINDSPIDER_WAR",
+    "rows_written": 48
+  }
+}
+
+
+四、前端轮询建议
+----------------
+1. POST 成功后立即用返回的 job_id 调 GET。
+2. 建议间隔：1～2 秒；也可先 1 秒，超过 30 秒改为 2～3 秒。
+3. 结束条件（二选一即可停）：
+   - data.status === "completed"
+   - data.status === "failed"
+4. 超时建议：按文件大小自行设定（例如 5～15 分钟），超时提示用户稍后重试或联系运维。
+
+
+五、如何判断「真正成功」（重要）
+------------------------------
+不要只看 HTTP 200，也不要只看 manifest.tables[].rows（那是 zip 里声明的行数）。
+
+成功须同时满足：
+  1) data.status === "completed"
+  2) data.error 为空
+  3) data.tables 中各表 rows_inserted + rows_updated 之和 > 0
+     （也可用 data.rows_written > 0，若字段存在）
+
+失败：
+  - data.status === "failed"
+  - 展示 data.error 或 data.message 给用户
+
+若 status 为 completed 但写入行数为 0，按失败处理（新版本服务端会直接标 failed）。
+
+
+六、前端展示建议
+----------------
+进行中：显示 message、progress_percent、当前 phase。
+完成：汇总 tables（表名、插入/更新/跳过行数）。
+失败：醒目展示 error。
+可选：显示 job_id，便于运维排查。
+
+
+七、浏览器 / axios 示例（仅供参考）
+----------------------------------
+// 上传
+const form = new FormData();
+form.append("file", fileInput.files[0]); // File 对象
+// form.append("remark", "可选备注");
+
+const createRes = await fetch(`${baseUrl}/api/v1/crawl-import/jobs`, {
+  method: "POST",
+  body: form
+  // 不要手动设 Content-Type，浏览器会自动带 boundary
+});
+const createJson = await createRes.json();
+const jobId = createJson.data.job_id;
+
+// 轮询
+async function poll(jobId) {
+  const res = await fetch(`${baseUrl}/api/v1/crawl-import/jobs/${jobId}`);
+  const json = await res.json();
+  const d = json.data;
+  if (d.status === "completed" || d.status === "failed") return d;
+  await new Promise(r => setTimeout(r, 1500));
+  return poll(jobId);
+}
+
+
+八、常见问题
+------------
+Q：Swagger 里 event_id 等默认是 "string"？
+A：清掉或不传即可，不影响入库。
+
+Q：zip 要什么样？
+A：MindSpider 导出包：含 manifest.json 与可识别表名的 csv
+   （如 weibo_note.csv、zhihu_content.csv 等）。
+
+Q：code 非 0 或 HTTP 4xx/5xx？
+A：按接口错误处理；404 表示 job_id 不存在。
+
+
+（文档版本：与 crawl_import 异步导入接口一致）

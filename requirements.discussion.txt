@@ -1,0 +1,7 @@
+# Install into the existing project .venv; no separate database or embedding model.
+json-repair==0.53.0
+PyMuPDF>=1.24
+markdown-it-py>=3,<5
+Pillow>=10,<13
+# Optional browser acceptance testing:
+playwright>=1.45,<2
